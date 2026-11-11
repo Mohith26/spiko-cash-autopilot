@@ -2,7 +2,7 @@
 
 **Live demo:** https://mohith26.github.io/spiko-cash-autopilot/
 
-Spiko's Series B post (6 Oct 2026) describes where the product is going: *"Your finance team sets its rules once, for example: automatically withdraw what's needed when payroll and supplier payments fall due."* This is a working version of that rule, built inside a replica of the Spiko app. It reads a company's scheduled payments, plans every withdrawal from Spiko Euro (or Spiko T-Bills Euro) as late as the real cut-offs and fund holidays allow, keeps only what the €500,000/day instant withdrawal cannot bring in time, and sizes the safety margin from the company's own forecast errors so the user picks a risk target instead of guessing a buffer. On a 12-month replay of a synthetic 150-person French SaaS company it earned **€32,171 more interest a year** than keeping the next 30 days of payments in the bank (average bank balance €83,103 instead of €1,733,090) with **0 uncovered payment days**, while the literal "withdraw on the due date" rule left 24 payment days short because of the instant cap.
+Spiko's Series B post (6 Oct 2026) describes where the product is going: *"Your finance team sets its rules once, for example: automatically withdraw what's needed when payroll and supplier payments fall due."* This is a working version of that rule, built inside a replica of the Spiko app. It reads a company's scheduled payments, plans every withdrawal from Spiko Euro (or Spiko T-Bills Euro) as late as the real cut-offs and fund holidays allow, keeps only what the €500,000/day instant withdrawal cannot bring in time, and sizes the safety margin from the company's own forecast errors so the user picks a risk target instead of guessing a buffer. On a 12-month replay of a synthetic 150-person French SaaS company it earned **€47,124 more interest a year** than keeping the next 30 days of payments in the bank (average bank balance €83,103 instead of €2,488,853) with **0 uncovered payment days**, while the literal "withdraw on the due date" rule left 24 payment days short because of the instant cap.
 
 ![Cash Autopilot](docs/screenshot.png)
 
@@ -15,7 +15,7 @@ Spiko's Series B post (6 Oct 2026) describes where the product is going: *"Your 
 
 ## How it works
 1. **Calendar and lead times** (`core/calendar.js`). Spiko Euro: ordered before 15:00 Paris, processed the next business day; T-Bills Euro: before 11:30, same day; SEPA credit on TARGET2 days; instant withdrawals 24/7 up to €500,000 a day (support.spiko.io). Fund non-operating days come from Spiko's public API (`/v0/funds/`), so e.g. 11 November 2026 is closed for T-Bills Euro but open for Spiko Euro. TARGET2 holidays are computed (Easter algorithm) and tested against the API list.
-2. **Forecast** (`core/forecast.js`). For each day: known scheduled payments at their latest estimate (payroll, URSSAF/DSN, VAT, rent, invoices) plus expected card spend; a scale σ from each estimate's stated precision and the spread of card spend. Receipts are never counted until they arrive.
+2. **Forecast** (`core/forecast.js`). For each day: scheduled payments at their latest estimate (recurring ones such as payroll, URSSAF/DSN, VAT and cloud are projected about 80 days ahead with a wide spread, then tightened as payroll files and returns are final; supplier invoices once received) plus expected card spend; a scale σ from each estimate's stated precision and the spread of card spend. Receipts are never counted until they arrive.
 3. **Calibrated need** (`core/conformal.js`). Split-conformal upper bound U = f + q·σ, with q the ⌈(n+1)(1-α)⌉-th smallest normalized error of the last 36 months, kept separately (Mondrian) for payment-heavy vs ordinary days and for 0-4+ days ahead. With fewer than 1/α - 1 scores it falls back to Chebyshev (1/√α).
 4. **Optimal plan** (`core/plan.js`). Requirements: expected payments are paid from morning cash; at the end of each day the bank holds the minimum balance plus max(0, U(tomorrow) − tomorrow's instant capacity); standard withdrawals land only on settle days reachable before their cut-off. Idle cash is a sum of cumulative moves, so a single backward pass gives the smallest feasible value at every slot and a forward pass repairs instant withdrawals to be non-negative: the plan is optimal in O(days). Tests check it against an independent simplex LP on 400 random instances.
 5. **Backtest** (`core/backtest.js`). The policy re-plans every morning at 09:00 using only what was known then, submits standard withdrawals on their last possible day, tops up with instant withdrawals in real time, sweeps surplus back at night. Idle cash is valued at Spiko T-Bills Euro's published NAV returns.
@@ -25,7 +25,7 @@ Spiko's Series B post (6 Oct 2026) describes where the product is going: *"Your 
 |---|---|---|---|---|
 | Cash Autopilot, 1% risk target | €83,103 | €1,609 | 0 | 19 |
 | Same planner, no calibrated margin | €77,662 | €1,506 | 0 | 19 |
-| Keep the next 30 days of payments in the bank | €1,733,090 | €33,780 | 0 | 187 |
+| Keep the next 30 days of payments in the bank | €2,488,853 | €48,733 | 0 | 187 |
 | Withdraw on the due date (instant only) | €48,494 | €953 | 24 (€7,512,582 of payments) | 0 |
 
 Does the risk target hold? Share of days whose outflow beat the calibrated need, 1 to 3 days ahead:

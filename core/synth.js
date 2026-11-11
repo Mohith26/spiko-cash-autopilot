@@ -47,14 +47,14 @@ export function generateLedger(cal, { seed = 20261111, start = '2023-11-01', end
     const actualPay = planned * (1 + 0.009 * rng.normal());
     const payDue = rollDate(cal, clampDay(y, m, m === 12 ? 22 : 28), 'preceding');
     push({ cat: 'payroll', label: `Net salaries ${monthName(m)}`, counterparty: 'Employees (payroll)', due: payDue, amount: r0(actualPay),
-      est: [[addDays(payDue, -25), r0(planned), 0.02], [addDays(payDue, -4), r0(actualPay), 0.002]] });
+      est: [[addDays(payDue, -80), r0(planned), 0.04], [addDays(payDue, -25), r0(planned), 0.02], [addDays(payDue, -4), r0(actualPay), 0.002]] });
     // ---- DSN social charges, due 5th of M+1 ----
     const [ny, nm] = m === 12 ? [y + 1, 1] : [y, m + 1];
     const dsnDue = rollDate(cal, clampDay(ny, nm, 5), 'following');
     const dsnEst = 0.82 * actualPay;
     const dsnAct = dsnEst * (1 + 0.012 * rng.normal());
     push({ cat: 'social', label: `URSSAF and retirement (DSN ${monthName(m)})`, counterparty: 'URSSAF / AGIRC-ARRCO', due: dsnDue, amount: r0(dsnAct),
-      est: [[payDue, r0(dsnEst), 0.025], [addDays(dsnDue, -3), r0(dsnAct), 0.002]] });
+      est: [[addDays(dsnDue, -80), r0(0.82 * planned), 0.05], [payDue, r0(dsnEst), 0.025], [addDays(dsnDue, -3), r0(dsnAct), 0.002]] });
     // ---- VAT on month M revenue, due 21st of M+1 ----
     const rev = 1720000 * Math.pow(1.013, i) * (1 + 0.04 * rng.normal());
     revenue[key] = rev;
@@ -62,7 +62,7 @@ export function generateLedger(cal, { seed = 20261111, start = '2023-11-01', end
     const vatAct = vatEst * (1 + 0.07 * rng.normal());
     const vatDue = rollDate(cal, clampDay(ny, nm, 21), 'following');
     push({ cat: 'vat', label: `VAT return (CA3 ${monthName(m)})`, counterparty: 'DGFiP', due: vatDue, amount: r0(vatAct),
-      est: [[clampDay(ny, nm, 1), r0(vatEst), 0.09], [addDays(vatDue, -6), r0(vatAct), 0]] });
+      est: [[addDays(vatDue, -80), r0(0.2 * 1720000 * Math.pow(1.013, i) * 0.6), 0.15], [clampDay(ny, nm, 1), r0(vatEst), 0.09], [addDays(vatDue, -6), r0(vatAct), 0]] });
     // ---- rent, quarterly in advance ----
     if ([1, 4, 7, 10].includes(m)) {
       const due = rollDate(cal, clampDay(y, m, 1), 'following');
@@ -74,7 +74,7 @@ export function generateLedger(cal, { seed = 20261111, start = '2023-11-01', end
       const trend = 64000 * Math.pow(1.011, i);
       const act = trend * (1 + 0.07 * rng.normal());
       push({ cat: 'cloud', label: `Cloud infrastructure (${monthName(m === 1 ? 12 : m - 1)} usage)`, counterparty: 'Nimbus Cloud EMEA', due, amount: r0(act),
-        est: [[addDays(due, -25), r0(trend), 0.08], [addDays(due, -2), r0(act), 0]] });
+        est: [[addDays(due, -80), r0(trend), 0.1], [addDays(due, -25), r0(trend), 0.08], [addDays(due, -2), r0(act), 0]] });
     }
     // ---- CFE (local business tax), 15 December ----
     if (m === 12) {

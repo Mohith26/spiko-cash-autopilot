@@ -72,14 +72,17 @@ function decisionOrders(pl) {
   pl.orders.forEach((o, i) => {
     const k = diffDays(pl.today, o.day);
     const reason = coverReason(pl, k, o);
-    if (o.type === 'standard' || (o.type === 'instant' && (o.amount >= 100000 || reason.day !== o.day)) || (o.type === 'deposit' && o.amount >= 100000)) out.push({ ...o, idx: i, k, reason });
+    const prefund = o.type === 'instant' ? o.amount - pl.f[k] : 0;
+    if (o.type === 'standard' || (o.type === 'instant' && (o.amount >= 100000 || prefund >= 25000)) || (o.type === 'deposit' && o.amount >= 100000)) out.push({ ...o, idx: i, k, reason });
   });
   return out;
 }
 function coverReason(pl, k, o) {
   // which payment day this move exists for: the next day whose calibrated need exceeds that morning's instant capacity
-  for (let j = (o.type === 'instant' ? k : k + 1); j < pl.days.length; j++) {
-    if (pl.plan.reserveNeed[j] > 0 || (o.type === 'instant' && j === k && pl.fcs[j].scheduled > 0)) {
+  const prefund = o.type === 'instant' && o.amount - pl.f[k] >= 25000;
+  if (o.type === 'instant' && !prefund) { const top = pl.fcs[k].known.slice().sort((a, b) => b.est - a.est)[0]; return { day: o.day, label: top ? top.item.label : 'Card and unscheduled spend' }; }
+  for (let j = (o.type === 'instant' ? k + 1 : k + 1); j < pl.days.length; j++) {
+    if (pl.plan.reserveNeed[j] > 0) {
       const top = pl.fcs[j].known.slice().sort((a, b) => b.est - a.est)[0];
       return { day: pl.days[j], label: top ? top.item.label : 'Card and unscheduled spend' };
     }
@@ -316,7 +319,7 @@ function paymentsTab(pl) {
       <td>${esc(p.label)}<div class="muted" style="font-size:12px">${esc(p.counterparty || '')}</div></td>
       <td><input type="date" value="${p.due}" min="${S.snap.today}" max="${addDays(S.snap.today, S.settings.horizon - 1)}" data-edit="due" data-id="${p.id}" aria-label="Due date for ${esc(p.label)}"></td>
       <td class="num"><input type="number" step="1000" min="0" value="${Math.round(p.est)}" data-edit="est" data-id="${p.id}" aria-label="Amount for ${esc(p.label)}"></td>
-      <td>${p.added ? '<span class="chip chip-info">Added</span>' : p.edited ? '<span class="chip chip-info">Edited</span>' : p.cv <= 0.002 ? '<span class="chip chip-active">Final</span>' : `<span class="chip chip-warn">Estimate ±${(p.cv * 100).toFixed(1)}%</span>`}</td>
+      <td>${p.added ? '<span class="chip chip-info">Added</span>' : p.edited ? '<span class="chip chip-info">Edited</span>' : p.cv <= 0.002 ? '<span class="chip chip-active">Final</span>' : p.cv >= 0.04 ? `<span class="chip chip-muted">Projected ±${(p.cv * 100).toFixed(0)}%</span>` : `<span class="chip chip-warn">Estimate ±${(p.cv * 100).toFixed(1)}%</span>`}</td>
       <td class="num"><button class="btn btn-ghost btn-sm" data-act="remove-payment" data-id="${p.id}" aria-label="Remove ${esc(p.label)}">${icon('trash-2')}</button></td></tr>`).join('');
   return `${infeasibleAlert(pl)}${whatIfBanner(pl)}
   <div class="section-head" style="margin-top:28px"><h2>Scheduled payments</h2>
@@ -441,7 +444,7 @@ function renderDay(day) {
   </section>
   <div class="grid2 mt24">
     <div class="card card-pad"><h3>Payments due</h3>
-      ${fc.known.length ? fc.known.slice().sort((a, c) => c.est - a.est).map(x => `<div class="kv"><span class="k" style="color:var(--zinc-900)">${esc(x.item.label)}<div class="muted" style="font-size:12px">${x.final ? 'Final amount' : `Estimate, ±${(x.cv * 100).toFixed(1)}%`}</div></span><span class="v tnum">${eur(x.est)}</span></div>`).join('') : '<div class="hint mt8">No scheduled payments.</div>'}
+      ${fc.known.length ? fc.known.slice().sort((a, c) => c.est - a.est).map(x => `<div class="kv"><span class="k" style="color:var(--zinc-900)">${esc(x.item.label)}<div class="muted" style="font-size:12px">${x.final ? 'Final amount' : x.cv >= 0.04 ? `Projected from past months, ±${(x.cv * 100).toFixed(0)}%` : `Estimate, ±${(x.cv * 100).toFixed(1)}%`}</div></span><span class="v tnum">${eur(x.est)}</span></div>`).join('') : '<div class="hint mt8">No scheduled payments.</div>'}
       <div class="kv"><span class="k">Card spend and direct debits (expected)</span><span class="v tnum">${eur(fc.unschedMean)}</span></div>
     </div>
     <div class="card card-pad"><h3>How the need is calibrated</h3>
@@ -457,7 +460,7 @@ function renderDay(day) {
     <div class="hint">That morning the bank needs the calibrated need plus the ${eur0(floor)} minimum. Instant withdrawals bring up to ${eur0(cap)} within minutes; the rest has to be in the account already.</div>
     <div class="waterfall" aria-hidden="true"><div style="width:${100 * Math.min(start, scale) / scale}%;background:#2376fb"></div><div style="width:${100 * Math.min(cap, scale - Math.min(start, scale)) / scale}%;background:#bedbff"></div></div>
     <div class="flex" style="font-size:12px;color:var(--zinc-600);gap:16px"><span class="flex"><i style="width:10px;height:10px;border-radius:2px;background:#2376fb;display:inline-block"></i>Already in the bank ${eur0(start)}</span><span class="flex"><i style="width:10px;height:10px;border-radius:2px;background:#bedbff;display:inline-block"></i>Instant capacity ${eur0(cap)}</span><span>Need ${eur0(b.U + floor)}</span></div>
-    ${arrivals.length || instantsBefore.length ? `<div class="mt12">${arrivals.map(o => `<div class="kv"><span class="k">Standard withdrawal lands ${dshort(o.day)}, ordered ${dshort(o.orderDay)} before ${hm(o.orderMinute)}</span><span class="v tnum">${eur(o.amount)}</span></div>`).join('')}${instantsBefore.map(o => `<div class="kv"><span class="k">Instant withdrawal on ${dshort(o.day)} (no standard settlement possible)</span><span class="v tnum">${eur(o.amount)}</span></div>`).join('')}</div>` : ''}
+    ${arrivals.length || instantsBefore.length ? `<div class="mt12">${arrivals.map(o => `<div class="kv"><span class="k">Standard withdrawal lands ${dshort(o.day)}, ordered ${dshort(o.orderDay)} before ${hm(o.orderMinute)}</span><span class="v tnum">${eur(o.amount)}</span></div>`).join('')}${instantsBefore.map(o => `<div class="kv"><span class="k">Instant withdrawal on ${dshort(o.day)} (${S.cal.isFundDay(P.fund, o.day) ? 'cheaper than landing it a day earlier' : 'fund closed, instant still runs 24/7'})</span><span class="v tnum">${eur(o.amount)}</span></div>`).join('')}</div>` : ''}
   </div>
   <div class="card card-pad mt16"><h3>Week calendar · ${P.name}</h3><div class="hint">Hatched days: the fund does not process withdrawals (weekends and the fund's published non-operating days).</div>
     <div class="week">${week.map(d => {
