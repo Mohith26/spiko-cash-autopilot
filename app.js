@@ -72,7 +72,7 @@ function decisionOrders(pl) {
   pl.orders.forEach((o, i) => {
     const k = diffDays(pl.today, o.day);
     const reason = coverReason(pl, k, o);
-    if (o.type === 'standard' || o.amount >= 50000) out.push({ ...o, idx: i, k, reason });
+    if (o.type === 'standard' || (o.type === 'instant' && (o.amount >= 100000 || reason.day !== o.day)) || (o.type === 'deposit' && o.amount >= 100000)) out.push({ ...o, idx: i, k, reason });
   });
   return out;
 }
