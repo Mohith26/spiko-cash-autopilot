@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cash Autopilot · Spiko</title>
+  <meta name="description" content="Concept feature for Spiko: payment-aware withdrawal rules with a calibrated shortfall guarantee." />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/lucide@0.542.0/dist/umd/lucide.min.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="logo" href="#/account" aria-label="Spiko home" id="logo"></a>
+      <button class="org" type="button" aria-label="Switch organisation">
+        <span><span class="name" id="org-name">Nordlys SAS</span><span class="kind" style="display:block">Business account</span></span>
+        <i data-lucide="chevrons-up-down" style="width:16px;height:16px;color:#3f3f46"></i>
+      </button>
+      <nav class="nav" aria-label="Account">
+        <a href="#/account" data-nav="account"><i data-lucide="laptop" class="lead"></i>Account<i data-lucide="chevron-right" class="chev"></i></a>
+        <a href="#/products" data-nav="products"><i data-lucide="chart-line" class="lead"></i>Our products<i data-lucide="chevron-right" class="chev"></i></a>
+        <a href="#/autopilot" data-nav="autopilot"><i data-lucide="zap" class="lead"></i>Autopilot<span class="new">New</span><i data-lucide="chevron-right" class="chev"></i></a>
+        <a href="#/settings" data-nav="settings"><i data-lucide="settings" class="lead"></i>Account settings<i data-lucide="chevron-right" class="chev"></i></a>
+      </nav>
+      <nav class="nav" aria-label="Resources">
+        <a href="#/statements" data-nav="statements"><i data-lucide="file-spreadsheet" class="lead"></i>Statements<i data-lucide="chevron-right" class="chev"></i></a>
+        <a href="#/integrations" data-nav="integrations"><i data-lucide="link" class="lead"></i>Integrations<i data-lucide="chevron-right" class="chev"></i></a>
+        <a href="https://docs.spiko.io/" target="_blank" rel="noopener"><i data-lucide="book-open" class="lead"></i>Documentation<i data-lucide="chevron-right" class="chev"></i></a>
+      </nav>
+      <nav class="nav" aria-label="Referral">
+        <a href="#/referral" data-nav="referral"><i data-lucide="gift" class="lead"></i>Earn €1,000<i data-lucide="chevron-right" class="chev"></i></a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="user"><span class="av" aria-hidden="true">C</span><span class="em" id="user-email">camille.roux@nordlys.example</span></div>
+      <nav class="nav" aria-label="Personal">
+        <a href="#/personal" data-nav="personal"><i data-lucide="circle-user-round" class="lead"></i>Personal Settings<i data-lucide="chevron-right" class="chev"></i></a>
+        <a href="#/contact" data-nav="contact"><i data-lucide="mail" class="lead"></i>Contact us<i data-lucide="chevron-right" class="chev"></i></a>
+        <a href="#/account" aria-label="Log out (disabled in demo)"><i data-lucide="log-out" class="lead"></i>Log out<i data-lucide="chevron-right" class="chev"></i></a>
+      </nav>
+    </aside>
+    <main class="main" id="main" tabindex="-1">
+      <div class="content" id="view" aria-live="polite"></div>
+      <footer class="footer">Unofficial concept demo by Mohith Gajjela. Not affiliated with Spiko. Synthetic company data; fund calendars, NAVs, yields and cut-off times from Spiko's public API and help center.</footer>
+    </main>
+  </div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "spiko-cash-autopilot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Payment-aware withdrawal plans with a calibrated shortfall guarantee, as a concept feature for the Spiko app.",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "seed": "node scripts/seed.mjs",
+    "fetch": "node scripts/fetch_public.mjs"
+  },
+  "license": "MIT"
+}
