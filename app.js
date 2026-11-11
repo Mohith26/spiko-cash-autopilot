@@ -199,7 +199,7 @@ function infeasibleAlert(pl) {
   if (pl.plan.feasible) return '';
   const b = pl.plan.blocking, d = pl.days[b.day];
   return `<div class="alert alert-error mt16" role="alert">${icon('circle-alert')}<div><b>${esc(b.label)} on ${dlong(d)} can't be fully covered.</b>
-    ${eur(b.missing)} would still be missing even with every withdrawal placed as late as the cut-offs allow. Move the payment, lower it, or keep more cash in the bank today.
+    ${eur(b.missing)} would still be missing even if every possible withdrawal were placed right now. Move the payment, lower it, or keep more cash in the bank today.
     ${hasWhatIf() ? '<div class="mt8"><button class="btn btn-outline btn-sm" data-act="reset-whatif">Undo what-if changes</button></div>' : ''}</div></div>`;
 }
 function whatIfBanner(pl) {

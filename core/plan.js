@@ -60,10 +60,11 @@ export function planWithdrawals({
     bankStart[k] = B0 + prev + cumC - cumF; // in the bank before today's payments (after yesterday's arrivals/sweep)
     reserveNeed[k] = Math.max(0, U[k] + floor - capOf(k));
     cumF += f[k]; cumC += committed[k] || 0;
-    const x = G[2 * k + 1] - gm;
+    let x = G[2 * k + 1] - gm;
+    if (x > upper[2 * k + 1]) x = upper[2 * k + 1]; // only reachable when infeasible: never invent a withdrawal that cannot land
     if (x > 1e-6) standard[k] = x; else if (x < -1e-6) deposit[k] = -x;
-    bankEnd[k] = B0 + G[2 * k + 1] + cumC - cumF;
-    prev = G[2 * k + 1];
+    prev = gm + x;
+    bankEnd[k] = B0 + prev + cumC - cumF;
   }
   let idle = 0;
   for (let k = 0; k < H; k++) idle += bankEnd[k];

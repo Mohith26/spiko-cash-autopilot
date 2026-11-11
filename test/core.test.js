@@ -109,6 +109,7 @@ test('infeasible case is reported with the payment that causes it', () => {
   assert.equal(p.blocking.day, 1);
   assert.equal(p.blocking.label, 'Net salaries');
   assert.ok(Math.abs(p.blocking.missing - 2) < 1e-9); // needs 12 - 5 (tomorrow's instant) = 7 tonight, only 5 can arrive today
+  assert.equal(p.standard[0], 0, 'no withdrawal is invented on a day nothing can land');
 });
 
 test('raising any calibrated bound never lowers idle cash (randomized monotonicity)', () => {
